@@ -54,7 +54,7 @@
           unelevated
           :outline="completed ? false : true"
           :icon="completed ? 'check' : undefined"
-          @click="completed = !completed"
+          @click="toggleCompete"
         />
         <q-input
           v-model="memo"
@@ -98,21 +98,55 @@
 <script setup lang="ts">
 const route = useRoute();
 const courseSlug = route.params.courseSlug as string;
-const { course, prevCourse, nextCourse } = useCourse(courseSlug);
-console.log('[courseSlug].vue 컴포넌트 setup hooks');
+const { course, prevCourse, nextCourse } = await useCourse(courseSlug);
 
+// if (!course) {
+//   throw createError({
+//     statusCode: 404,
+//     statusMessage: 'Course not found',
+//     // fatal: true,
+//   });
+// }
+
+console.log('[courseSlug].vue 컴포넌트 setup hooks');
 definePageMeta({
   key: (route) => route.fullPath,
   title: 'My home page',
   pageType: '',
-  keepalive: true,
+  // keepalive: true,
   alias: ['/lecture/:courseSlug'],
+  // validate: (route) => {
+  middleware: async (route) => {
+    const courseSlug = route.params.courseSlug as string;
+    const { course } = await useCourse(courseSlug);
+    if (!course) {
+      // return navigateTo('/');  // 특정싸이트로 이동하고 싶다면
+      // return false;
+
+      // 에러를 표시하고 싶다면
+      return abortNavigation(
+        createError({
+          statusCode: 404,
+          statusMessage: 'Course not found',
+          fatal: true,
+        }),
+      );
+    }
+    return true;
+  },
 });
 const memo = ref('');
 const completed = ref(false);
 
 const movePage = async (path: string) => {
   await navigateTo(path);
+};
+
+const toggleCompete = () => {
+  // $fetch('/api/error');
+  // showError('에러가 발생했습니다.');
+  completed.value = !completed.value;
+  throw createError('에러가 발생했습니다!');
 };
 </script>
 
